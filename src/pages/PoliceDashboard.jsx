@@ -1,0 +1,142 @@
+import { useState } from 'react';
+import { useAlerts } from '../contexts/AlertContext';
+import { useTranslation } from '../contexts/TranslationContext';
+import Navbar from '../components/Navbar';
+import AlertCard from '../components/AlertCard';
+import MapView from '../components/MapView';
+
+export default function PoliceDashboard() {
+    const { alerts, acknowledge, resolve, acknowledgeAll, resolveAll, pendingCount, activeCount } = useAlerts();
+    const { t } = useTranslation();
+    const [filter, setFilter] = useState('all');
+    const [selectedAlert, setSelectedAlert] = useState(null);
+
+    const FILTERS = [
+        { label: t('police.all'), value: 'all' },
+        { label: t('police.sos'), value: 'sos' },
+        { label: t('police.border'), value: 'border' },
+        { label: t('police.pending'), value: 'pending' },
+        { label: t('police.resolved'), value: 'resolved' },
+    ];
+
+    const filteredAlerts = alerts.filter((a) => {
+        if (filter === 'all') return true;
+        if (filter === 'pending') return a.status === 'pending';
+        if (filter === 'resolved') return a.status === 'resolved';
+        return a.type === filter;
+    });
+
+    const sosCount = alerts.filter((a) => a.type === 'sos' && a.status !== 'resolved').length;
+    const borderCount = alerts.filter((a) => a.type === 'border' && a.status !== 'resolved').length;
+    const resolvedCount = alerts.filter((a) => a.status === 'resolved').length;
+
+    const alertMarkers = alerts
+        .filter((a) => a.status !== 'resolved' && a.location)
+        .map((a) => ({ id: a.id, type: a.type, location: a.location, boatNumber: a.boatNumber, fishermanName: a.fishermanName, timestamp: a.timestamp }));
+
+    return (
+        <div className="min-h-dvh bg-bg flex flex-col">
+            <Navbar title={t('app.name')} showAlertBadge />
+
+            <div className="flex-1 w-full max-w-2xl mx-auto">
+                {/* Stats */}
+                <div className="px-4 pt-4 pb-3 animate-fade-in">
+                    <div className="grid grid-cols-4 gap-2.5">
+                        <StatCard value={activeCount} label={t('police.active')} color="text-ocean" />
+                        <StatCard value={sosCount} label={t('police.sos')} color="text-danger" pulse={sosCount > 0} />
+                        <StatCard value={borderCount} label={t('police.border')} color="text-amber-600" />
+                        <StatCard value={resolvedCount} label={t('police.resolved')} color="text-safe" />
+                    </div>
+                </div>
+
+                {/* Alerts */}
+                <div className="px-4 pt-3 pb-3">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-[17px] font-extrabold text-text-primary tracking-tight">{t('police.liveAlerts')}</h2>
+                        <span className="text-[12px] font-semibold text-text-light bg-gray-100 px-3 py-1 rounded-full">
+                            {filteredAlerts.length} {filteredAlerts.length !== 1 ? t('police.results') : t('police.result')}
+                        </span>
+                    </div>
+
+                    <div className="flex gap-2 mb-5 overflow-x-auto pb-2 scrollbar-none animate-fade-in" style={{ animationDelay: '0.05s' }}>
+                        {FILTERS.map((f) => (
+                            <button key={f.value} onClick={() => setFilter(f.value)} className={`px-5 py-2.5 rounded-[14px] text-[12px] font-bold whitespace-nowrap transition-all duration-200 btn-press ${filter === f.value ? 'bg-ocean text-white shadow-lg shadow-ocean/25' : 'bg-white text-text-secondary border border-border/60 hover:bg-gray-50 hover:border-border'}`}>
+                                {f.label}
+                                {f.value === 'pending' && pendingCount > 0 && (
+                                    <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 bg-white/20 rounded-full text-[10px] font-bold px-1">{pendingCount}</span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="space-y-3 stagger">
+                        {filteredAlerts.map((alert) => (
+                            <AlertCard key={alert.id} alert={alert} onAcknowledge={acknowledge} onResolve={resolve} />
+                        ))}
+                        {filteredAlerts.length === 0 && (
+                            <div className="text-center py-16 animate-fade-in">
+                                <div className="text-5xl mb-4">{filter === 'resolved' ? '✅' : '🛡'}</div>
+                                <p className="text-[15px] font-bold text-text-secondary">
+                                    {filter === 'resolved' ? t('police.noResolvedAlerts') : t('police.noActiveAlerts')}
+                                </p>
+                                <p className="text-[12px] text-text-light mt-1.5">
+                                    {filter === 'all' ? t('police.allClear') : t('police.noFilterAlerts', { filter })}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Map */}
+                <div className="px-4 pt-4 pb-3">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-[17px] font-extrabold text-text-primary tracking-tight">{t('police.mapMonitoring')}</h2>
+                        <div className="flex items-center gap-1.5 bg-safe/8 px-3 py-1.5 rounded-full">
+                            <span className="w-[6px] h-[6px] rounded-full bg-safe animate-pulse" />
+                            <span className="text-[11px] font-bold text-safe">{t('police.live')}</span>
+                        </div>
+                    </div>
+                    <MapView alertMarkers={alertMarkers} showBoundary height="h-[300px] sm:h-[400px]" onMarkerClick={(m) => setSelectedAlert(m)} />
+                </div>
+
+                {selectedAlert && (
+                    <div className="px-4 py-2 animate-scale-in">
+                        <div className="bg-white rounded-[20px] shadow-lg border border-border/50 p-5 flex items-center justify-between">
+                            <div className="space-y-1">
+                                <p className="font-extrabold text-[14px] text-text-primary">{selectedAlert.boatNumber}</p>
+                                <p className="text-[12px] text-text-secondary font-medium">{selectedAlert.fishermanName}</p>
+                                <p className="text-[11px] text-text-light font-mono">{selectedAlert.location.lat.toFixed(4)}°, {selectedAlert.location.lng.toFixed(4)}°</p>
+                            </div>
+                            <button onClick={() => setSelectedAlert(null)} className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-text-light hover:bg-gray-200 hover:text-text-secondary transition-all btn-press">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Bulk Actions */}
+                <div className="px-4 pt-4 pb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                    <div className="grid grid-cols-2 gap-3">
+                        <button onClick={acknowledgeAll} disabled={pendingCount === 0} className="py-4 text-white font-bold text-[13px] rounded-[16px] btn-gradient-ocean disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 btn-press">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                            {t('police.ackAll')} ({pendingCount})
+                        </button>
+                        <button onClick={resolveAll} disabled={activeCount === 0} className="py-4 text-white font-bold text-[13px] rounded-[16px] btn-gradient-aqua disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 btn-press">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                            {t('police.resolveAll')}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function StatCard({ value, label, color, pulse = false }) {
+    return (
+        <div className={`bg-white rounded-[16px] shadow-sm border p-3.5 text-center transition-all hover:shadow-md ${pulse ? 'border-danger/30 shadow-danger/[0.08] shadow-md' : 'border-border/40'}`}>
+            <p className={`text-[22px] font-extrabold ${color} leading-none`}>{value}</p>
+            <p className="text-[9px] font-bold text-text-light mt-1.5 uppercase tracking-[0.1em]">{label}</p>
+        </div>
+    );
+}
