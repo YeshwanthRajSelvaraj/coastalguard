@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "Real-time maritime safety and SOS communication system for fishermen and coastal authorities.",
   "author": "Yeshwanth Raj Selvaraj",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
