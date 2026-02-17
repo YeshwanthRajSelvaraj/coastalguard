@@ -1,15 +1,56 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAlerts } from '../contexts/AlertContext';
+import { useSOS } from '../contexts/SOSContext';
 import { useTranslation } from '../contexts/TranslationContext';
 import Navbar from '../components/Navbar';
 import AlertCard from '../components/AlertCard';
 import MapView from '../components/MapView';
+import { requestPermission, getPermissionStatus, sendSOSNotification, registerServiceWorker } from '../services/notificationService';
+
+const CHANNEL_INFO = {
+    internet: { icon: '🌐', label: 'Internet', color: '#1E88E5' },
+    satellite: { icon: '🛰️', label: 'Satellite', color: '#7B1FA2' },
+    ais: { icon: '📡', label: 'AIS/VHF', color: '#E65100' },
+};
 
 export default function PoliceDashboard() {
     const { alerts, acknowledge, resolve, acknowledgeAll, resolveAll, pendingCount, activeCount } = useAlerts();
+    const { engineStatus, connectivity, queueStats, deliveryLog, channelAvailability } = useSOS();
     const { t } = useTranslation();
     const [filter, setFilter] = useState('all');
     const [selectedAlert, setSelectedAlert] = useState(null);
+    const [showChannelMonitor, setShowChannelMonitor] = useState(true);
+    const [notifPermission, setNotifPermission] = useState(getPermissionStatus());
+    const prevAlertCount = useRef(alerts.length);
+
+    // Register service worker on mount
+    useEffect(() => {
+        registerServiceWorker();
+    }, []);
+
+    // Send browser notification on new SOS alerts
+    useEffect(() => {
+        if (alerts.length > prevAlertCount.current) {
+            const newAlerts = alerts.slice(prevAlertCount.current);
+            newAlerts.forEach(alert => {
+                if (alert.type === 'sos' || alert.type === 'border') {
+                    sendSOSNotification({
+                        type: alert.type,
+                        boatNumber: alert.boatNumber || 'Unknown',
+                        fishermanName: alert.fishermanName || 'Unknown',
+                        location: alert.location,
+                        alertId: alert.id,
+                    });
+                }
+            });
+        }
+        prevAlertCount.current = alerts.length;
+    }, [alerts]);
+
+    const handleEnableNotifications = async () => {
+        const granted = await requestPermission();
+        setNotifPermission(granted ? 'granted' : 'denied');
+    };
 
     const FILTERS = [
         { label: t('police.all'), value: 'all' },
@@ -46,6 +87,112 @@ export default function PoliceDashboard() {
                         <StatCard value={sosCount} label={t('police.sos')} color="text-danger" pulse={sosCount > 0} />
                         <StatCard value={borderCount} label={t('police.border')} color="text-amber-600" />
                         <StatCard value={resolvedCount} label={t('police.resolved')} color="text-safe" />
+                    </div>
+                </div>
+
+                {/* Notification Permission Banner */}
+                {notifPermission !== 'granted' && notifPermission !== 'unsupported' && (
+                    <div className="px-4 pb-3 animate-slide-down">
+                        <div className="flex items-center gap-3 p-4 bg-ocean/[0.06] border border-ocean/20 rounded-[16px]">
+                            <span className="text-[20px]">🔔</span>
+                            <div className="flex-1">
+                                <p className="text-[12px] font-bold text-ocean">Enable Notifications</p>
+                                <p className="text-[10px] text-text-secondary mt-0.5">Get instant alerts when fishermen send SOS</p>
+                            </div>
+                            <button
+                                onClick={handleEnableNotifications}
+                                className="px-4 py-2 bg-ocean text-white text-[11px] font-bold rounded-xl btn-press hover:bg-ocean-light transition-colors"
+                                id="enable-notifications-btn"
+                            >
+                                Enable
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Channel Delivery Monitor */}
+                <div className="px-4 pb-3 animate-fade-in" style={{ animationDelay: '0.05s' }}>
+                    <div className="channel-monitor">
+                        <div className="cm-title" style={{ cursor: 'pointer' }} onClick={() => setShowChannelMonitor(!showChannelMonitor)}>
+                            <span>📡</span>
+                            <span>Communication Channels</span>
+                            <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span className={`w-[6px] h-[6px] rounded-full ${connectivity.isOnline ? 'bg-safe' : 'bg-danger'} animate-pulse`} />
+                                <span style={{ fontSize: '10px', fontWeight: 600, color: '#6b7280' }}>{connectivity.isOnline ? 'Online' : 'Offline'}</span>
+                                <span style={{ fontSize: '8px', opacity: 0.5 }}>{showChannelMonitor ? '▲' : '▼'}</span>
+                            </span>
+                        </div>
+
+                        {showChannelMonitor && (
+                            <>
+                                <div className="cm-channels">
+                                    {Object.entries(CHANNEL_INFO).map(([key, ch]) => {
+                                        const available = channelAvailability[key];
+                                        return (
+                                            <div key={key} className={`cm-channel ${available ? 'cm-ch-online' : 'cm-ch-offline'}`}>
+                                                <div className="cm-ch-icon">{ch.icon}</div>
+                                                <span className="cm-ch-name">{ch.label}</span>
+                                                <span className="cm-ch-status">{available ? '● Ready' : '○ Down'}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Queue Status */}
+                                {(queueStats.pending > 0 || queueStats.cached > 0) && (
+                                    <div style={{
+                                        marginTop: '10px', padding: '10px 14px', background: '#fffbeb',
+                                        borderRadius: '10px', border: '1px solid #fde68a',
+                                        fontSize: '11px', fontWeight: 700, color: '#92400e',
+                                        display: 'flex', alignItems: 'center', gap: '8px',
+                                    }}>
+                                        <span>📦</span>
+                                        <span>{queueStats.pending + queueStats.cached} SOS in offline queue — auto-retrying every 30s</span>
+                                    </div>
+                                )}
+
+                                {/* Recent Delivery Log */}
+                                {deliveryLog.length > 0 && (
+                                    <div style={{ marginTop: '10px' }}>
+                                        <div style={{ fontSize: '10px', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
+                                            Recent Delivery Log
+                                        </div>
+                                        <div style={{ maxHeight: '120px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            {deliveryLog.slice(0, 8).map((entry, i) => (
+                                                <div key={i} style={{
+                                                    display: 'flex', alignItems: 'center', gap: '8px',
+                                                    padding: '6px 10px', borderRadius: '8px',
+                                                    background: entry.event === 'sos_delivered' ? '#f0fdf4' :
+                                                        entry.event === 'sos_cached' ? '#fffbeb' :
+                                                            entry.event === 'sos_failed' ? '#fef2f2' : '#f8fafc',
+                                                    fontSize: '10px', fontWeight: 600,
+                                                }}>
+                                                    <span>
+                                                        {entry.event === 'sos_delivered' ? '✅' :
+                                                            entry.event === 'sos_queued' ? '📤' :
+                                                                entry.event === 'sos_sending' ? '⏳' :
+                                                                    entry.event === 'sos_cached' ? '📦' :
+                                                                        entry.event === 'sos_failed' ? '❌' :
+                                                                            entry.event === 'channels_probed' ? '📡' : '•'}
+                                                    </span>
+                                                    <span style={{ color: '#374151', flex: 1 }}>
+                                                        {entry.event === 'sos_delivered' && `SOS delivered via ${entry.data?.delivery?.channel || 'channel'}`}
+                                                        {entry.event === 'sos_queued' && `SOS queued: ${entry.data?.boatNumber || 'Unknown'}`}
+                                                        {entry.event === 'sos_sending' && `Attempting delivery...`}
+                                                        {entry.event === 'sos_cached' && `SOS cached offline — retrying`}
+                                                        {entry.event === 'sos_failed' && `SOS delivery failed`}
+                                                        {entry.event === 'channels_probed' && `Channel scan complete`}
+                                                    </span>
+                                                    <span style={{ color: '#9ca3af', fontSize: '9px', fontVariantNumeric: 'tabular-nums' }}>
+                                                        {new Date(entry.at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
                 </div>
 

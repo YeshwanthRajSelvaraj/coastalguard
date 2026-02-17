@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { AlertProvider } from './contexts/AlertContext';
 import { TranslationProvider } from './contexts/TranslationContext';
+import { SOSProvider } from './contexts/SOSContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import FishermanSignup from './pages/FishermanSignup';
@@ -16,14 +17,16 @@ export default function App() {
       <TranslationProvider>
         <AuthProvider>
           <AlertProvider>
-            <Routes>
-              <Route path="/" element={<LoginPage />} />
-              <Route path="/register/fisherman" element={<FishermanSignup />} />
-              <Route path="/register/authority" element={<AuthoritySignup />} />
-              <Route path="/dashboard" element={<ProtectedRoute allowedRole={ROLES.FISHERMAN}><FishermanDashboard /></ProtectedRoute>} />
-              <Route path="/authority" element={<ProtectedRoute allowedRole={ROLES.AUTHORITY}><PoliceDashboard /></ProtectedRoute>} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+            <SOSProvider>
+              <Routes>
+                <Route path="/" element={<LoginPage />} />
+                <Route path="/register/fisherman" element={<FishermanSignup />} />
+                <Route path="/register/authority" element={<AuthoritySignup />} />
+                <Route path="/dashboard" element={<ProtectedRoute allowedRole={ROLES.FISHERMAN}><FishermanDashboard /></ProtectedRoute>} />
+                <Route path="/authority" element={<ProtectedRoute allowedRole={ROLES.AUTHORITY}><PoliceDashboard /></ProtectedRoute>} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </SOSProvider>
           </AlertProvider>
         </AuthProvider>
       </TranslationProvider>

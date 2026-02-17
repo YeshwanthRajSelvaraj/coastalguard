@@ -1104,3 +1104,998 @@ body {
     border-width: 2px;
   }
 }
+
+/* ═══════════════════════════════════════════════ */
+/* ═══ SOS STATUS PANEL — Multi-Channel UI ══════ */
+/* ═══════════════════════════════════════════════ */
+
+/* ─── Compact Mode (inline badge) ────────────── */
+.sos-status-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.ssc-channels {
+  display: flex;
+  gap: 6px;
+}
+
+.ssc-channel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 28px;
+  height: 28px;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.ssc-available {
+  background: rgba(0, 200, 83, 0.08);
+}
+
+.ssc-unavailable {
+  background: rgba(244, 67, 54, 0.06);
+  opacity: 0.6;
+}
+
+.ssc-icon {
+  font-size: 14px;
+}
+
+.ssc-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+}
+
+.ssc-offline-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: #F44336;
+  background: #fef2f2;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.ssc-pending-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: #E65100;
+  background: #fff3e0;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* ─── Full Panel ─────────────────────────────── */
+.sos-status-panel {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 16px;
+  font-family: 'Inter', system-ui, sans-serif;
+  transition: all 0.3s ease;
+}
+
+.ssp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.ssp-connectivity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ssp-conn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ssp-online {
+  background: #00C853;
+  box-shadow: 0 0 8px rgba(0, 200, 83, 0.4);
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.ssp-offline {
+  background: #F44336;
+  box-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
+  animation: pulse-soft 1.5s ease-in-out infinite;
+}
+
+.ssp-conn-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.ssp-latency {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9ca3af;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ssp-queue-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #E65100;
+  background: #fff3e0;
+  padding: 4px 10px;
+  border-radius: 8px;
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.ssp-queue-icon {
+  font-size: 12px;
+}
+
+/* ─── Channel Grid ───────────────────────────── */
+.ssp-channels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ssp-channel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: 14px;
+  border: 1.5px solid transparent;
+  transition: all 0.25s ease;
+  cursor: default;
+}
+
+.ssp-ch-available {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.ssp-ch-unavailable {
+  background: #fef2f2;
+  border-color: #fecaca;
+  opacity: 0.7;
+}
+
+.ssp-ch-delivered {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #4ade80;
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.2);
+}
+
+.ssp-ch-top {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ssp-ch-icon {
+  font-size: 22px;
+}
+
+.ssp-ch-status-dot {
+  position: absolute;
+  top: -2px;
+  right: -6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  transition: all 0.3s ease;
+}
+
+.ssp-ch-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.ssp-ch-state {
+  font-size: 9px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.ssp-ch-delivered .ssp-ch-state {
+  color: #16a34a;
+  font-weight: 800;
+}
+
+/* ─── Delivery Status ────────────────────────── */
+.ssp-delivery {
+  padding: 14px;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.ssp-del-success {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1.5px solid #86efac;
+}
+
+.ssp-del-cached {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1.5px solid #fde68a;
+}
+
+.ssp-del-pending {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1.5px solid #93c5fd;
+}
+
+.ssp-del-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ssp-del-icon {
+  font-size: 18px;
+}
+
+.ssp-del-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+
+.ssp-del-channel {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 8px;
+  margin-left: auto;
+}
+
+.ssp-del-retry {
+  font-size: 10px;
+  font-weight: 700;
+  color: #92400e;
+  background: rgba(146, 64, 14, 0.08);
+  padding: 3px 10px;
+  border-radius: 8px;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  animation: pulse-soft 1s ease-in-out infinite;
+}
+
+/* ─── Delivery Progress Stepper ──────────────── */
+.ssp-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-top: 14px;
+  padding: 0 8px;
+}
+
+.ssp-prog-step {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.ssp-prog-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.ssp-prog-success {
+  background: #00C853;
+  box-shadow: 0 0 10px rgba(0, 200, 83, 0.3);
+}
+
+.ssp-prog-fail {
+  background: #F44336;
+  box-shadow: 0 0 10px rgba(244, 67, 54, 0.3);
+}
+
+.ssp-prog-trying {
+  background: #1E88E5;
+  animation: pulse-soft 1s ease-in-out infinite;
+}
+
+.ssp-prog-waiting {
+  background: #e5e7eb;
+  color: #9ca3af;
+}
+
+.ssp-prog-label {
+  font-size: 8px;
+  font-weight: 700;
+  color: #6b7280;
+  position: absolute;
+  bottom: -14px;
+  text-align: center;
+  width: 28px;
+}
+
+.ssp-prog-step {
+  position: relative;
+}
+
+.ssp-prog-line {
+  width: 32px;
+  height: 3px;
+  background: #e5e7eb;
+  transition: background 0.3s ease;
+}
+
+.ssp-prog-line-done {
+  background: #00C853;
+}
+
+/* ─── Offline Cache Info ─────────────────────── */
+.ssp-cache-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 12px;
+}
+
+.ssp-cache-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.ssp-cache-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ssp-cache-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.ssp-cache-sub {
+  font-size: 10px;
+  font-weight: 500;
+  color: #b45309;
+}
+
+/* ─── Pulse Animation ────────────────────────── */
+@keyframes pulse-soft {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* ─── Channel Delivery Monitor (Authority) ───── */
+.channel-monitor {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 16px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.cm-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0B3C5D;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cm-channels {
+  display: flex;
+  gap: 8px;
+}
+
+.cm-channel {
+  flex: 1;
+  padding: 10px;
+  border-radius: 12px;
+  text-align: center;
+  border: 1.5px solid rgba(0, 0, 0, 0.06);
+  transition: all 0.25s ease;
+}
+
+.cm-ch-online {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.cm-ch-offline {
+  background: #fef2f2;
+  border-color: #fecaca;
+  opacity: 0.7;
+}
+
+.cm-ch-icon {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.cm-ch-name {
+  font-size: 9px;
+  font-weight: 700;
+  color: #374151;
+  display: block;
+}
+
+.cm-ch-status {
+  font-size: 8px;
+  font-weight: 600;
+  margin-top: 2px;
+  display: block;
+}
+
+.cm-ch-online .cm-ch-status {
+  color: #16a34a;
+}
+
+.cm-ch-offline .cm-ch-status {
+  color: #dc2626;
+}
+
+/* ─── Mobile Responsive for SOS Panel ────────── */
+@media (max-width: 640px) {
+  .sos-status-panel {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .ssp-channel {
+    padding: 10px 6px;
+  }
+
+  .ssp-ch-icon {
+    font-size: 18px;
+  }
+
+  .ssp-ch-name {
+    font-size: 9px;
+  }
+
+  .ssp-delivery {
+    padding: 10px;
+  }
+
+  .ssp-prog-dot {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  .ssp-prog-line {
+    width: 24px;
+  }
+
+  .cm-channels {
+    gap: 6px;
+  }
+
+  .cm-channel {
+    padding: 8px;
+  }
+}
+
+/* ═══════════════════════════════════════════════ */
+/* ═══ WEATHER WIDGET — Sea Conditions ══════════ */
+/* ═══════════════════════════════════════════════ */
+
+.weather-widget {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  transition: all 0.3s cubic-bezier(.4, 0, .2, 1);
+}
+
+.weather-widget:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.weather-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+}
+
+.ww-shimmer {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e5e7eb, #f3f4f6, #e5e7eb);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.ww-loading-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+/* ─── Advisory Banner ────────────────────────── */
+.ww-advisory {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.ww-adv-safe {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+}
+
+.ww-adv-caution {
+  background: linear-gradient(135deg, #fefce8, #fef9c3);
+}
+
+.ww-adv-warning {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+}
+
+.ww-adv-danger {
+  background: linear-gradient(135deg, #fef2f2, #fecaca);
+}
+
+.ww-adv-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ww-adv-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ww-adv-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+
+.ww-adv-msg {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.ww-adv-danger .ww-adv-title {
+  color: #c62828;
+}
+
+.ww-adv-danger .ww-adv-msg {
+  color: #b91c1c;
+}
+
+.ww-adv-warning .ww-adv-title {
+  color: #92400e;
+}
+
+.ww-adv-caution .ww-adv-title {
+  color: #854d0e;
+}
+
+.ww-adv-safe .ww-adv-title {
+  color: #166534;
+}
+
+/* ─── Main Weather Row ───────────────────────── */
+.ww-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  gap: 12px;
+}
+
+.ww-temp-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ww-weather-icon {
+  font-size: 32px;
+}
+
+.ww-temp-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.ww-temp {
+  font-size: 24px;
+  font-weight: 900;
+  color: #1a1a2e;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.ww-desc {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.ww-sea-section {
+  text-align: right;
+}
+
+.ww-sea-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.ww-sea-icon {
+  font-size: 20px;
+}
+
+.ww-sea-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.ww-sea-value {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+/* ─── Stats Grid ─────────────────────────────── */
+.ww-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: rgba(0, 0, 0, 0.04);
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.ww-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 8px;
+  background: #fff;
+  text-align: center;
+}
+
+.ww-stat-icon {
+  font-size: 16px;
+}
+
+.ww-stat-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1a1a2e;
+  line-height: 1;
+}
+
+.ww-stat-value-sm {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ww-stat-unit {
+  font-size: 9px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.ww-stat-label {
+  font-size: 8px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ─── Expanded Details ───────────────────────── */
+.ww-details {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.ww-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.ww-detail-row:last-of-type {
+  border-bottom: none;
+}
+
+.ww-detail-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.ww-detail-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Hourly Forecast ────────────────────────── */
+.ww-forecast {
+  margin-top: 12px;
+}
+
+.ww-forecast-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.ww-forecast-scroll {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.ww-forecast-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.ww-forecast-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 52px;
+  padding: 8px 6px;
+  border-radius: 12px;
+  background: #f9fafb;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.ww-forecast-item:hover {
+  background: #f0f4f8;
+}
+
+.ww-fc-hour {
+  font-size: 9px;
+  font-weight: 700;
+  color: #9ca3af;
+  font-variant-numeric: tabular-nums;
+}
+
+.ww-fc-icon {
+  font-size: 16px;
+}
+
+.ww-fc-temp {
+  font-size: 12px;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+
+.ww-fc-wind {
+  font-size: 8px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+/* ─── Footer ─────────────────────────────────── */
+.ww-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 12px;
+}
+
+.ww-toggle {
+  font-size: 10px;
+  font-weight: 700;
+  color: #0B3C5D;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  font-family: inherit;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.ww-toggle:hover {
+  opacity: 1;
+}
+
+.ww-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ww-stale {
+  font-size: 9px;
+  font-weight: 600;
+  color: #F4A261;
+}
+
+.ww-refresh {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.ww-refresh:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* ─── Compact Mode ───────────────────────────── */
+.weather-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.weather-compact:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.wc-icon {
+  font-size: 16px;
+}
+
+.wc-temp {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+
+.wc-wind {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.wc-advisory {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.wc-adv-safe {
+  background: #dcfce7;
+}
+
+.wc-adv-caution {
+  background: #fef9c3;
+}
+
+.wc-adv-warning {
+  background: #fef3c7;
+}
+
+.wc-adv-danger {
+  background: #fecaca;
+}
+
+/* ─── Weather Responsive ─────────────────────── */
+@media (max-width: 640px) {
+  .ww-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ww-temp {
+    font-size: 20px;
+  }
+
+  .ww-weather-icon {
+    font-size: 28px;
+  }
+
+  .ww-forecast-item {
+    min-width: 48px;
+    padding: 6px 4px;
+  }
+}
