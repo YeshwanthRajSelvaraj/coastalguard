@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAlerts } from '../contexts/AlertContext';
 import { useSOS } from '../contexts/SOSContext';
+import { useSocket } from '../contexts/SocketContext';
 import { useTranslation } from '../contexts/TranslationContext';
 import Navbar from '../components/Navbar';
 import AlertCard from '../components/AlertCard';
 import MapView from '../components/MapView';
+import RealtimeIndicator from '../components/RealtimeIndicator';
 import { requestPermission, getPermissionStatus, sendSOSNotification, registerServiceWorker } from '../services/notificationService';
 
 const CHANNEL_INFO = {
@@ -16,6 +18,7 @@ const CHANNEL_INFO = {
 export default function PoliceDashboard() {
     const { alerts, acknowledge, resolve, acknowledgeAll, resolveAll, pendingCount, activeCount } = useAlerts();
     const { engineStatus, connectivity, queueStats, deliveryLog, channelAvailability } = useSOS();
+    const { isWSConnected, onlineUsers, acknowledgeSOSviaWS, resolveSOSviaWS } = useSocket();
     const { t } = useTranslation();
     const [filter, setFilter] = useState('all');
     const [selectedAlert, setSelectedAlert] = useState(null);
@@ -81,27 +84,39 @@ export default function PoliceDashboard() {
 
             <div className="flex-1 w-full max-w-2xl mx-auto">
                 {/* Stats */}
-                <div className="px-4 pt-4 pb-3 animate-fade-in">
+                <div className="px-5 pt-5 pb-3 animate-fade-in">
+                    {/* Real-Time Connection Status */}
+                    <div className="flex items-center justify-between mb-3">
+                        <RealtimeIndicator showUsers showLatency />
+                        {isWSConnected && (
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-text-light">
+                                <span>🛡 {onlineUsers.authority} authorities</span>
+                                <span className="text-white/10">|</span>
+                                <span>🚢 {onlineUsers.fisherman} fishermen</span>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="grid grid-cols-4 gap-2.5">
-                        <StatCard value={activeCount} label={t('police.active')} color="text-ocean" />
-                        <StatCard value={sosCount} label={t('police.sos')} color="text-danger" pulse={sosCount > 0} />
-                        <StatCard value={borderCount} label={t('police.border')} color="text-amber-600" />
+                        <StatCard value={activeCount} label={t('police.active')} color="text-aqua" />
+                        <StatCard value={sosCount} label={t('police.sos')} color="text-danger-light" pulse={sosCount > 0} />
+                        <StatCard value={borderCount} label={t('police.border')} color="text-warning" />
                         <StatCard value={resolvedCount} label={t('police.resolved')} color="text-safe" />
                     </div>
                 </div>
 
                 {/* Notification Permission Banner */}
                 {notifPermission !== 'granted' && notifPermission !== 'unsupported' && (
-                    <div className="px-4 pb-3 animate-slide-down">
-                        <div className="flex items-center gap-3 p-4 bg-ocean/[0.06] border border-ocean/20 rounded-[16px]">
+                    <div className="px-5 pb-3 animate-slide-down">
+                        <div className="flex items-center gap-3 p-4 bg-aqua/[0.04] border border-aqua/10 rounded-[18px]">
                             <span className="text-[20px]">🔔</span>
                             <div className="flex-1">
-                                <p className="text-[12px] font-bold text-ocean">Enable Notifications</p>
+                                <p className="text-[12px] font-bold text-aqua">Enable Notifications</p>
                                 <p className="text-[10px] text-text-secondary mt-0.5">Get instant alerts when fishermen send SOS</p>
                             </div>
                             <button
                                 onClick={handleEnableNotifications}
-                                className="px-4 py-2 bg-ocean text-white text-[11px] font-bold rounded-xl btn-press hover:bg-ocean-light transition-colors"
+                                className="px-4 py-2 bg-aqua-dark text-white text-[11px] font-bold rounded-xl btn-press hover:bg-aqua transition-colors"
                                 id="enable-notifications-btn"
                             >
                                 Enable
@@ -111,15 +126,15 @@ export default function PoliceDashboard() {
                 )}
 
                 {/* Channel Delivery Monitor */}
-                <div className="px-4 pb-3 animate-fade-in" style={{ animationDelay: '0.05s' }}>
+                <div className="px-5 pb-3 animate-fade-in" style={{ animationDelay: '0.05s' }}>
                     <div className="channel-monitor">
                         <div className="cm-title" style={{ cursor: 'pointer' }} onClick={() => setShowChannelMonitor(!showChannelMonitor)}>
                             <span>📡</span>
                             <span>Communication Channels</span>
                             <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <span className={`w-[6px] h-[6px] rounded-full ${connectivity.isOnline ? 'bg-safe' : 'bg-danger'} animate-pulse`} />
-                                <span style={{ fontSize: '10px', fontWeight: 600, color: '#6b7280' }}>{connectivity.isOnline ? 'Online' : 'Offline'}</span>
-                                <span style={{ fontSize: '8px', opacity: 0.5 }}>{showChannelMonitor ? '▲' : '▼'}</span>
+                                <span style={{ fontSize: '10px', fontWeight: 600, color: '#94a3b8' }}>{connectivity.isOnline ? 'Online' : 'Offline'}</span>
+                                <span style={{ fontSize: '8px', opacity: 0.5, color: '#64748b' }}>{showChannelMonitor ? '▲' : '▼'}</span>
                             </span>
                         </div>
 
@@ -141,9 +156,9 @@ export default function PoliceDashboard() {
                                 {/* Queue Status */}
                                 {(queueStats.pending > 0 || queueStats.cached > 0) && (
                                     <div style={{
-                                        marginTop: '10px', padding: '10px 14px', background: '#fffbeb',
-                                        borderRadius: '10px', border: '1px solid #fde68a',
-                                        fontSize: '11px', fontWeight: 700, color: '#92400e',
+                                        marginTop: '10px', padding: '10px 14px', background: 'rgba(251, 191, 36, 0.06)',
+                                        borderRadius: '12px', border: '1px solid rgba(251, 191, 36, 0.15)',
+                                        fontSize: '11px', fontWeight: 700, color: '#fcd34d',
                                         display: 'flex', alignItems: 'center', gap: '8px',
                                     }}>
                                         <span>📦</span>
@@ -154,17 +169,17 @@ export default function PoliceDashboard() {
                                 {/* Recent Delivery Log */}
                                 {deliveryLog.length > 0 && (
                                     <div style={{ marginTop: '10px' }}>
-                                        <div style={{ fontSize: '10px', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
+                                        <div style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
                                             Recent Delivery Log
                                         </div>
                                         <div style={{ maxHeight: '120px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                             {deliveryLog.slice(0, 8).map((entry, i) => (
                                                 <div key={i} style={{
                                                     display: 'flex', alignItems: 'center', gap: '8px',
-                                                    padding: '6px 10px', borderRadius: '8px',
-                                                    background: entry.event === 'sos_delivered' ? '#f0fdf4' :
-                                                        entry.event === 'sos_cached' ? '#fffbeb' :
-                                                            entry.event === 'sos_failed' ? '#fef2f2' : '#f8fafc',
+                                                    padding: '6px 10px', borderRadius: '10px',
+                                                    background: entry.event === 'sos_delivered' ? 'rgba(52, 211, 153, 0.06)' :
+                                                        entry.event === 'sos_cached' ? 'rgba(251, 191, 36, 0.06)' :
+                                                            entry.event === 'sos_failed' ? 'rgba(244, 63, 94, 0.06)' : 'rgba(255,255,255,0.02)',
                                                     fontSize: '10px', fontWeight: 600,
                                                 }}>
                                                     <span>
@@ -175,7 +190,7 @@ export default function PoliceDashboard() {
                                                                         entry.event === 'sos_failed' ? '❌' :
                                                                             entry.event === 'channels_probed' ? '📡' : '•'}
                                                     </span>
-                                                    <span style={{ color: '#374151', flex: 1 }}>
+                                                    <span style={{ color: '#cbd5e1', flex: 1 }}>
                                                         {entry.event === 'sos_delivered' && `SOS delivered via ${entry.data?.delivery?.channel || 'channel'}`}
                                                         {entry.event === 'sos_queued' && `SOS queued: ${entry.data?.boatNumber || 'Unknown'}`}
                                                         {entry.event === 'sos_sending' && `Attempting delivery...`}
@@ -183,7 +198,7 @@ export default function PoliceDashboard() {
                                                         {entry.event === 'sos_failed' && `SOS delivery failed`}
                                                         {entry.event === 'channels_probed' && `Channel scan complete`}
                                                     </span>
-                                                    <span style={{ color: '#9ca3af', fontSize: '9px', fontVariantNumeric: 'tabular-nums' }}>
+                                                    <span style={{ color: '#64748b', fontSize: '9px', fontVariantNumeric: 'tabular-nums' }}>
                                                         {new Date(entry.at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                                     </span>
                                                 </div>
@@ -197,20 +212,20 @@ export default function PoliceDashboard() {
                 </div>
 
                 {/* Alerts */}
-                <div className="px-4 pt-3 pb-3">
+                <div className="px-5 pt-3 pb-3">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-[17px] font-extrabold text-text-primary tracking-tight">{t('police.liveAlerts')}</h2>
-                        <span className="text-[12px] font-semibold text-text-light bg-gray-100 px-3 py-1 rounded-full">
+                        <h2 className="text-[18px] font-extrabold text-text-primary tracking-tight">{t('police.liveAlerts')}</h2>
+                        <span className="text-[12px] font-semibold text-text-light bg-white/[0.04] border border-white/[0.06] px-3.5 py-1.5 rounded-full">
                             {filteredAlerts.length} {filteredAlerts.length !== 1 ? t('police.results') : t('police.result')}
                         </span>
                     </div>
 
                     <div className="flex gap-2 mb-5 overflow-x-auto pb-2 scrollbar-none animate-fade-in" style={{ animationDelay: '0.05s' }}>
                         {FILTERS.map((f) => (
-                            <button key={f.value} onClick={() => setFilter(f.value)} className={`px-5 py-2.5 rounded-[14px] text-[12px] font-bold whitespace-nowrap transition-all duration-200 btn-press ${filter === f.value ? 'bg-ocean text-white shadow-lg shadow-ocean/25' : 'bg-white text-text-secondary border border-border/60 hover:bg-gray-50 hover:border-border'}`}>
+                            <button key={f.value} onClick={() => setFilter(f.value)} className={`px-5 py-2.5 rounded-[14px] text-[12px] font-bold whitespace-nowrap transition-all duration-200 btn-press ${filter === f.value ? 'bg-aqua-dark text-white shadow-lg shadow-aqua/20' : 'bg-white/[0.04] text-text-secondary border border-white/[0.06] hover:bg-white/[0.06]'}`}>
                                 {f.label}
                                 {f.value === 'pending' && pendingCount > 0 && (
-                                    <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 bg-white/20 rounded-full text-[10px] font-bold px-1">{pendingCount}</span>
+                                    <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 bg-white/15 rounded-full text-[10px] font-bold px-1">{pendingCount}</span>
                                 )}
                             </button>
                         ))}
@@ -235,10 +250,10 @@ export default function PoliceDashboard() {
                 </div>
 
                 {/* Map */}
-                <div className="px-4 pt-4 pb-3">
+                <div className="px-5 pt-4 pb-3">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-[17px] font-extrabold text-text-primary tracking-tight">{t('police.mapMonitoring')}</h2>
-                        <div className="flex items-center gap-1.5 bg-safe/8 px-3 py-1.5 rounded-full">
+                        <h2 className="text-[18px] font-extrabold text-text-primary tracking-tight">{t('police.mapMonitoring')}</h2>
+                        <div className="flex items-center gap-1.5 bg-safe/[0.06] border border-safe/10 px-3.5 py-1.5 rounded-full">
                             <span className="w-[6px] h-[6px] rounded-full bg-safe animate-pulse" />
                             <span className="text-[11px] font-bold text-safe">{t('police.live')}</span>
                         </div>
@@ -247,14 +262,14 @@ export default function PoliceDashboard() {
                 </div>
 
                 {selectedAlert && (
-                    <div className="px-4 py-2 animate-scale-in">
-                        <div className="bg-white rounded-[20px] shadow-lg border border-border/50 p-5 flex items-center justify-between">
+                    <div className="px-5 py-2 animate-scale-in">
+                        <div className="bg-white/[0.03] backdrop-blur-xl rounded-[22px] shadow-[0_4px_30px_rgba(0,0,0,0.3)] border border-white/[0.06] p-5 flex items-center justify-between">
                             <div className="space-y-1">
                                 <p className="font-extrabold text-[14px] text-text-primary">{selectedAlert.boatNumber}</p>
                                 <p className="text-[12px] text-text-secondary font-medium">{selectedAlert.fishermanName}</p>
                                 <p className="text-[11px] text-text-light font-mono">{selectedAlert.location.lat.toFixed(4)}°, {selectedAlert.location.lng.toFixed(4)}°</p>
                             </div>
-                            <button onClick={() => setSelectedAlert(null)} className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-text-light hover:bg-gray-200 hover:text-text-secondary transition-all btn-press">
+                            <button onClick={() => setSelectedAlert(null)} className="w-9 h-9 rounded-xl bg-white/[0.05] flex items-center justify-center text-text-light hover:bg-white/[0.1] hover:text-text-secondary transition-all btn-press">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                             </button>
                         </div>
@@ -262,7 +277,7 @@ export default function PoliceDashboard() {
                 )}
 
                 {/* Bulk Actions */}
-                <div className="px-4 pt-4 pb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                <div className="px-5 pt-4 pb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                     <div className="grid grid-cols-2 gap-3">
                         <button onClick={acknowledgeAll} disabled={pendingCount === 0} className="py-4 text-white font-bold text-[13px] rounded-[16px] btn-gradient-ocean disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 btn-press">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
@@ -281,9 +296,9 @@ export default function PoliceDashboard() {
 
 function StatCard({ value, label, color, pulse = false }) {
     return (
-        <div className={`bg-white rounded-[16px] shadow-sm border p-3.5 text-center transition-all hover:shadow-md ${pulse ? 'border-danger/30 shadow-danger/[0.08] shadow-md' : 'border-border/40'}`}>
+        <div className={`bg-white/[0.03] backdrop-blur-xl rounded-[18px] shadow-[0_2px_20px_rgba(0,0,0,0.2)] border p-4 text-center transition-all duration-200 hover:bg-white/[0.05] ${pulse ? 'border-danger/20 shadow-danger/[0.1]' : 'border-white/[0.06]'}`}>
             <p className={`text-[22px] font-extrabold ${color} leading-none`}>{value}</p>
-            <p className="text-[9px] font-bold text-text-light mt-1.5 uppercase tracking-[0.1em]">{label}</p>
+            <p className="text-[9px] font-bold text-text-light mt-1.5 uppercase tracking-[0.12em]">{label}</p>
         </div>
     );
 }

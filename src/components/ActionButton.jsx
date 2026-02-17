@@ -1,39 +1,35 @@
-export default function ActionButton({
-    label,
-    icon,
-    onClick,
-    variant = 'ocean',
-    fullWidth = false,
-    size = 'lg',
-}) {
-    const variants = {
-        ocean: 'btn-gradient-ocean text-white',
-        aqua: 'btn-gradient-aqua text-white',
-        danger: 'btn-gradient-danger text-white',
-        outline: 'bg-white border-2 border-border text-text-primary hover:bg-gray-50',
-    };
+import { useTranslation } from '../contexts/TranslationContext';
 
-    const sizes = {
-        md: 'py-3.5 text-[13px] gap-2',
-        lg: 'py-4 text-[14px] gap-2.5',
-        xl: 'py-[18px] text-[16px] gap-3',
-    };
+const VARIANTS = {
+    ocean: 'btn-gradient-ocean',
+    aqua: 'btn-gradient-aqua',
+    danger: 'btn-gradient-danger',
+    outline: 'bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08]',
+};
 
+const SIZES = {
+    md: 'py-3 text-[13px] rounded-[14px]',
+    lg: 'py-4 text-[14px] rounded-[16px]',
+    xl: 'py-5 text-[16px] rounded-[20px]',
+};
+
+export default function ActionButton({ label, icon, variant = 'ocean', size = 'md', onClick, fullWidth, disabled, className = '' }) {
     return (
         <button
             onClick={onClick}
+            disabled={disabled}
             className={`
-        ${variants[variant]}
-        ${sizes[size]}
-        ${fullWidth ? 'w-full' : 'px-6'}
-        inline-flex items-center justify-center
-        font-bold rounded-2xl
-        btn-press
-        transition-all duration-200
-      `}
+                ${VARIANTS[variant]} ${SIZES[size]}
+                ${fullWidth ? 'w-full' : ''}
+                flex items-center justify-center gap-2.5 px-6
+                text-white font-bold tracking-tight
+                transition-all duration-200 btn-press
+                disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none
+                ${className}
+            `}
         >
-            <span className="text-[18px]">{icon}</span>
-            <span>{label}</span>
+            {icon && <span className="text-[1.1em]">{icon}</span>}
+            {label}
         </button>
     );
 }

@@ -1,12 +1,12 @@
 import { useTranslation } from '../contexts/TranslationContext';
 
 const STATUS_CONFIG = {
-    safe: { key: 'status.safe', bg: 'bg-safe/10', text: 'text-safe', border: 'border-safe/25', dot: 'bg-safe' },
-    warning: { key: 'status.nearBorder', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', dot: 'bg-amber-500' },
-    danger: { key: 'status.danger', bg: 'bg-danger/8', text: 'text-danger', border: 'border-danger/25', dot: 'bg-danger' },
-    pending: { key: 'status.pending', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', dot: 'bg-amber-500' },
-    acknowledged: { key: 'status.acknowledged', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', dot: 'bg-blue-500' },
-    resolved: { key: 'status.resolved', bg: 'bg-safe/10', text: 'text-safe', border: 'border-safe/25', dot: 'bg-safe' },
+    safe: { key: 'status.safe', bg: 'bg-safe/[0.08]', text: 'text-safe', border: 'border-safe/20', dot: 'bg-safe' },
+    warning: { key: 'status.nearBorder', bg: 'bg-warning/[0.08]', text: 'text-warning', border: 'border-warning/20', dot: 'bg-warning' },
+    danger: { key: 'status.danger', bg: 'bg-danger/[0.08]', text: 'text-danger-light', border: 'border-danger/20', dot: 'bg-danger' },
+    pending: { key: 'status.pending', bg: 'bg-warning/[0.08]', text: 'text-warning', border: 'border-warning/20', dot: 'bg-warning' },
+    acknowledged: { key: 'status.acknowledged', bg: 'bg-aqua/[0.08]', text: 'text-aqua', border: 'border-aqua/20', dot: 'bg-aqua' },
+    resolved: { key: 'status.resolved', bg: 'bg-safe/[0.08]', text: 'text-safe', border: 'border-safe/20', dot: 'bg-safe' },
 };
 
 export default function StatusBadge({ status, large = false }) {

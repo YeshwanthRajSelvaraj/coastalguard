@@ -22,6 +22,7 @@ import { SatelliteChannel } from './channels/SatelliteChannel';
 import { AISChannel } from './channels/AISChannel';
 import { getNetworkDetector } from './NetworkDetector';
 import { getSOSCache, SOS_STATUS } from './SOSCache';
+import { getSocketService } from '../socketService';
 
 const RETRY_INTERVAL_MS = 30000;    // Retry every 30 seconds
 const MAX_RETRIES = 20;             // Max retry attempts before marking failed
@@ -144,10 +145,13 @@ export class SOSEngine {
         // Also send to legacy alert system for backward compatibility
         this._sendToLegacyAlertSystem(sos);
 
+        // Step 2a: Send via WebSocket for real-time cross-device delivery
+        this._sendViaWebSocket(sos);
+
         // Notify listeners
         this._notifyListeners('sos_queued', sos);
 
-        // Step 2: Attempt immediate delivery
+        // Step 2b: Attempt delivery through multi-channel pipeline
         await this._deliverSOS(sos);
 
         return sos;
@@ -311,6 +315,33 @@ export class SOSEngine {
             window.dispatchEvent(new CustomEvent('cg_alerts_updated', { detail: alerts }));
         } catch (err) {
             console.error('[SOSEngine] Failed to bridge to legacy alert system:', err);
+        }
+    }
+
+    // ─── WebSocket Real-Time Bridge ──────────────────
+
+    /**
+     * Send SOS via WebSocket for instant cross-device delivery.
+     * This runs in parallel with the multi-channel pipeline.
+     * If WebSocket is unavailable, the legacy alert system
+     * and multi-channel delivery still function.
+     */
+    _sendViaWebSocket(sos) {
+        try {
+            const socketService = getSocketService();
+            if (socketService && socketService.isConnected()) {
+                socketService.sendSOS({
+                    type: sos.type,
+                    location: sos.location,
+                    clientSOSId: sos.id,
+                    phone: sos.phone || null,
+                });
+                console.log(`[SOSEngine] 📡 SOS ${sos.id} sent via WebSocket for real-time delivery`);
+            } else {
+                console.log(`[SOSEngine] WebSocket not connected — SOS delivered via other channels`);
+            }
+        } catch (err) {
+            console.warn('[SOSEngine] WebSocket send failed (non-critical):', err.message);
         }
     }
 
